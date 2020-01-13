@@ -1,0 +1,6 @@
+src/
+.gitignore
+.huskyrc.json
+.prettierrc.yaml
+tsconfig.json
+tslint.json

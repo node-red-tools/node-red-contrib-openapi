@@ -1,0 +1,64 @@
+<script type="text/javascript">
+    (function() {
+        function isString(v) {
+            return typeof v === 'string';
+        }
+
+        RED.nodes.registerType('openapi-out', {
+            category: 'network',
+            defaults: {
+                name: {
+                    value: '',
+                    validate: isString,
+                },
+                schemas: {
+                    value: [],
+                    type:"openapi-config"
+                },
+                selectedSchema: {
+                    value: '',
+                    required: true,
+                    validate: isString,
+                },
+                operation: {
+                    value: '',
+                    required: true,
+                    validate: isString,
+                },
+            },
+            inputs: 1,
+            outputs: 0,
+            color: '#63db2a',
+            label: function() {
+                return this.name || this.operation || 'openapi out';
+            },
+            labelStyle: function() {
+                return this.name ? 'node_label_italic' : '';
+            },
+            icon: 'icon.png',
+            oneditprepare: function oneditprepare() {},
+        });
+    })();
+</script>
+
+<script type="text/x-red" data-template-name="openapi-out">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+
+        <label for="node-input-schema"><i class="fa fa-tag"></i> Schema</label>
+        <input type="text" id="node-input-schema" placeholder="Schema">
+    </div>
+    <div class="form-tips"><b>Tip:</b> This is here to help.</div>
+</script>
+
+<script type="text/x-red" data-help-name="openapi-out">
+    <p>Some useful help text to introduce the node.</p>
+    <h3>Outputs</h3>
+        <dl class="message-properties">
+        <dt>payload
+            <span class="property-type">string | buffer</span>
+        </dt>
+    <h3>Details</h3>
+    <p>OpenAPI schema based HTTP client.</p>
+</script>
