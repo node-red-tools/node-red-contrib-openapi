@@ -8,7 +8,7 @@
         "build": "npm run build:ts && npm run build:html && npm run build:assets",
         "build:ts": "cross-env NODE_ENV=production npm run clean && tsc -b tsconfig.json",
         "build:html": "cpy 'src/*.html' 'lib/'",
-        "build:assets": "cpy 'src/icons/*' 'lib/icons'",
+        "build:assets": "cpy 'assets/icons/*' 'lib/icons'",
         "clean": "rimraf lib/",
         "fmt": "pretty-quick"
     },
