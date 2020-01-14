@@ -4,22 +4,45 @@
             return typeof v === 'string';
         }
 
-        RED.nodes.registerType('openapi config', {
+        function isPlainObject(v) {
+            return $.isPlainObject(v);
+        }
+
+        function hashCode(str) {
+            let hash = 0,
+                i,
+                chr;
+
+            if (!str || typeof str !== 'string' || str.length === 0)
+                return hash;
+
+            for (i = 0; i < str.length; i++) {
+                chr = str.charCodeAt(i);
+                hash = (hash << 5) - hash + chr;
+                hash |= 0; // Convert to 32bit integer
+            }
+
+            return hash;
+        }
+
+        RED.nodes.registerType('openapi', {
             category: 'config',
             defaults: {
                 name: {
-                    value: 'openapi config',
-                    validate: isString,
-                },
-                schemas: {
-                    value: [],
-                    required: true,
-                    validate: Array.isArray,
-                },
-                location: {
-                    value: 'upload',
+                    value: 'openapi',
                     required: true,
                     validate: isString,
+                },
+                schema: {
+                    value: null,
+                    required: true,
+                    validate: input => {
+                        if (!isPlainObject(input)) {
+                            return false;
+                        }
+
+                        return input.hash > 0 && isPlainObject(input.content);
+                    },
                 },
             },
             icon: 'icon.png',
@@ -27,56 +50,169 @@
             outputs: 1,
             color: '#63db2a',
             label: function() {
-                return this.name || 'openapi-config';
+                return this.name || 'openapi';
             },
             labelStyle: function() {
                 return this.name ? 'node_label_italic' : '';
             },
             oneditprepare: function() {
-                // const fileLocationGroupd = $('#openapi-config-location-file-group');
-                // const serverLocationGroupd = $(
-                //     '#openapi-config-location-file-group',
-                // );
-                // fileLocationGroupd.hide();
-                // serverLocationGroupd.hide();
-                // const locationRadio = $('input[name="openapi-config-location"]');
-                // locationRadio.on('change', function() {});
-                // const list = $('#node-config-openapi-schema-list');
-                // this.value.forEach(item => {
-                //     list.append(`<li><span>${item}</span></li>`);
-                // });
+                const node = this;
+                const input = $('#schema-file');
+                const inputTitle = $('#schema-file-title');
+                const current = $('#schema');
+                const selectButton = $('#schema-file-select-button');
+                const addButton = $('#schema-file-add-button');
+                const setHistory = () => {
+                    if (node.history != null) {
+                        return;
+                    }
+
+                    node.history = {
+                        schema: node.schema,
+                        name: node.name,
+                    };
+                };
+                const toggle = (element, disable) => {
+                    if (disable) {
+                        element.addClass('disabled');
+                    } else {
+                        element.removeClass('disabled');
+                    }
+                };
+                const renderInputTitle = () => {
+                    const fileName = input.val();
+                    let text = 'select a file to import';
+
+                    if (fileName) {
+                        text = fileName.split('\\').pop();
+                    }
+
+                    inputTitle.text(text);
+                };
+                const renderCurrent = () => {
+                    current.empty();
+
+                    if (node.schema == null) {
+                        current.append('<span>None</span>');
+
+                        return;
+                    }
+
+                    const content = node.schema.content;
+                    let title = 'Unknown file';
+
+                    if (content.info != null) {
+                        title = `${content.info.title}:${content.info.version}`;
+                    }
+
+                    current.append(`
+                        <span>${title}</span>
+                        <button class="red-ui-button openapi-remove-btn">Remove</button>
+                    `);
+                };
+
+                toggle(addButton, true);
+
+                selectButton.click(() => input.trigger('click'));
+
+                input.change(function onFileSelect() {
+                    const fileName = $(this).val();
+
+                    toggle(addButton, !fileName);
+                    renderInputTitle();
+                });
+
+                addButton.click(() => {
+                    const file = input.prop('files')[0];
+
+                    if (file == null) {
+                        return;
+                    }
+
+                    toggle(addButton, true);
+                    toggle(input, true);
+
+                    file.text()
+                        .then(content => {
+                            const json = JSON.parse(content);
+
+                            if (!json.openapi) {
+                                alert('Invalid OpenAPI schema');
+
+                                return;
+                            }
+
+                            const hash = hashCode(content);
+
+                            if (
+                                node.schema != null &&
+                                node.schema.hash === hash
+                            ) {
+                                alert('File is already added');
+
+                                return;
+                            }
+
+                            node.schema = {
+                                hash: hash,
+                                content: json,
+                            };
+                        })
+                        .catch(err => {
+                            alert('Failed to load file');
+
+                            console.error(err);
+                        })
+                        .finally(() => {
+                            toggle(addButton, false);
+                            toggle(input, false);
+                            renderCurrent();
+                        });
+                });
+
+                current.on('click', '.openapi-remove-btn', () => {
+                    setHistory();
+                    node.schema = null;
+                    renderCurrent();
+                });
+
+                renderInputTitle();
+                renderCurrent();
+            },
+            oneditcancel: function() {
+                if (!this.history) {
+                    return;
+                }
+
+                this.name = this.history.name;
+                this.schema = this.history.schema;
             },
         });
     })();
 </script>
 
-<script type="text/x-red" data-template-name="openapi config">
+<script type="text/x-red" data-template-name="openapi">
     <div class="form-row">
-        <label for="openapi-config-name"><i class="fa fa-tag"></i> Name</label>
-        <input type="text" id="openapi-config-name" placeholder="Name">
+        <label for="schema-file-select-button"><i class="fa fa-upload"></i> Upload: </label>
+        <a class="red-ui-button" id="schema-file-select-button">
+            <i class="fa fa-upload"></i>
+            <span id="schema-file-title">select a file to import</span>
+        </a>
+        <input id="schema-file" type="file" accept=".json" style="display:none">
+        <button id="schema-file-add-button" class="red-ui-button primary">Add</button>
     </div>
     <div class="form-row">
-        <label for="openapi-config-location"><i class="fa fa-tag"></i> Load schema from:</label>
-        <input type="radio" name="openapi-config-location" value="upload" checked> File<br>
-        <input type="radio" name="openapi-config-location" value="female"> Server<br>
+        <label for="schema"><i class="fa fa-code"></i> Current: </label>
+        <div id="schema" style="display: inline-block;"></div>
     </div>
     <div class="form-row">
-        <label for="openapi-config-location-file"><i class="fa fa-tag"></i> Schema</label>
-        <input type="file" id="openapi-config-location-file" placeholder="Schema">
-        <input type="submit" value="Upload" />
-    </div>
-    <div class="form-row">
-        <label for="node-config-openapi-schema"><i class="fa fa-tag"></i> Schema</label>
-        <input type="text" id="node-config-openapi-schema" placeholder="Schema">
-    </div>
-    <div class="form-row">
-        <label for="node-config-openapi-schema-list"><i class="fa fa-tag"></i> Schema</label>
-        <ul id="node-config-openapi-schema-list">/<ul>
+        <label for="node-config-input-name"><i class="fa fa-tag"></i> Name: </label>
+        <input type="text" id="node-config-input-name" />
     </div>
     <div class="form-tips"><b>Tip:</b> This is here to help.</div>
 </script>
 
-<script type="text/x-red" data-help-name="openapi-config">
+<script type="text/x-red" data-help-name="openapi">
     <p>Some useful help text to introduce the node.</p>
     <h3>Outputs</h3>
         <dl class="message-properties">

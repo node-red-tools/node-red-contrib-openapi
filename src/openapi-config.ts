@@ -1,4 +1,5 @@
 import * as Ajv from 'ajv';
+import { Request, Response } from 'express';
 import { Node, NodeProperties, Red } from 'node-red';
 import OpenAPISchemaValidator from 'openapi-schema-validator';
 import { OpenAPI } from 'openapi-types';
@@ -20,7 +21,7 @@ export function register(RED: Red): void {
         },
         {
             settings: {
-                schemas: [],
+                schema: null,
             },
         },
     );

@@ -5,8 +5,8 @@
     "main": "lib/index.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "build": "npm run build:ts && npm run build:html && npm run build:assets",
-        "build:ts": "cross-env NODE_ENV=production npm run clean && tsc -b tsconfig.json",
+        "build": "npm run clean && npm run build:ts && npm run build:html && npm run build:assets",
+        "build:ts": "cross-env NODE_ENV=production tsc -b tsconfig.json",
         "build:html": "cpy 'src/*.html' 'lib/'",
         "build:assets": "cpy 'assets/icons/*' 'lib/icons'",
         "clean": "rimraf lib/",
@@ -19,6 +19,7 @@
     "author": "Node-Red Community",
     "license": "MIT",
     "devDependencies": {
+        "@types/express": "^4.17.2",
         "@types/node": "^13.1.6",
         "@types/node-red": "^0.20.1",
         "cpy-cli": "^3.0.0",

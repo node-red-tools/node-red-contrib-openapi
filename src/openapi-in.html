@@ -11,9 +11,10 @@
                     value: '',
                     validate: isString,
                 },
-                schemas: {
+                openapi: {
                     value: [],
-                    type:"openapi-config"
+                    required: true,
+                    type: 'openapi',
                 },
                 selectedSchema: {
                     value: '',
@@ -43,11 +44,12 @@
 
 <script type="text/x-red" data-template-name="openapi-in">
     <div class="form-row">
-        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-        <input type="text" id="node-input-name" placeholder="Name">
-
-        <label for="node-input-schema"><i class="fa fa-tag"></i> Schema</label>
-        <input type="text" id="node-input-schema" placeholder="Schema">
+        <label for="node-input-openapi"><i class="fa fa-book"></i> <span>Schema</span></label>
+        <input type="text" id="node-input-openapi">
+    </div>
+    <div class="form-row">
+        <label for="node-input-operation"><i class="fa fa-tasks"></i> <span>Operation</span></label>
+        <select id="node-input-operation"></select>
     </div>
     <div class="form-tips"><b>Tip:</b> This is here to help.</div>
 </script>
