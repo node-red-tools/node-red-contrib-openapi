@@ -1,7 +1,7 @@
 {
     "name": "@node-red-tools/node-red-contrib-openapi",
     "version": "0.1.0",
-    "description": "Allows using OpenAPI spec files",
+    "description": "OpenAPI driven custom HTTP nodes",
     "main": "lib/index.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
