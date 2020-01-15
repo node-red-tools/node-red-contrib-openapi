@@ -1,22 +1,13 @@
+import { NextFunction, Request, Response } from 'express';
 import { Node, NodeProperties, Red } from 'node-red';
-import { ConfigSchema, Message } from './models';
-// import { findSchema } from './openapi-schema';
+import { findSchema } from './helpers';
+import { Message } from './models';
 import { enqueue } from './queue';
 import { openApiServer } from './server';
 
 export interface Properties {
     schema: string;
     operation: string;
-}
-
-function findSchema(RED: Red, configId: string): ConfigSchema | undefined {
-    const node = RED.nodes.getNode(configId) as any;
-
-    if (node && node.schema) {
-        return node.schema;
-    }
-
-    return undefined;
 }
 
 module.exports = function register(RED: Red): void {
@@ -55,8 +46,8 @@ module.exports = function register(RED: Red): void {
                 app: RED.httpNode,
                 schema: spec.content,
                 operation: this.operation,
-                handler: (req, res) => {
-                    const id = enqueue(req, res);
+                handler: (req: Request, res: Response, next: NextFunction) => {
+                    const id = enqueue(req, res, next);
                     const msg: Message = {
                         ___openapiReqID: id,
                         cookies: req.cookies,

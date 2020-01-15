@@ -3,20 +3,11 @@ import { Request, Response } from 'express';
 import { Node, NodeProperties, Red } from 'node-red';
 import OpenAPISchemaValidator from 'openapi-schema-validator';
 import { OpenAPI } from 'openapi-types';
+import { findSchema } from './helpers';
 import { ConfigSchema } from './models';
 
 export interface Properties extends NodeProperties {
     schema?: ConfigSchema;
-}
-
-export function findSchema(RED: Red, configId: string): ConfigSchema | undefined {
-    const node = RED.nodes.getNode(configId) as Properties;
-
-    if (node && node.schema) {
-        return node.schema;
-    }
-
-    return undefined;
 }
 
 module.exports = function register(RED: Red): void {

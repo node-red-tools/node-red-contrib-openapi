@@ -1,6 +1,12 @@
-import { Application, Handler } from 'express';
+import express, {
+    Application,
+    Handler,
+    NextFunction,
+    Request,
+    Response,
+} from 'express';
 import { initialize } from 'express-openapi';
-import {} from 'openapi-request-validator';
+import { IOpenAPIRequestValidator } from 'openapi-request-validator';
 import { OpenAPIV3 } from 'openapi-types';
 
 export interface Properties {
@@ -12,7 +18,10 @@ export interface Properties {
 
 export type DestroyFn = () => void;
 
-function truncateSchema(schema: OpenAPIV3.Document, op: string): OpenAPIV3.Document {
+function truncateSchema(
+    schema: OpenAPIV3.Document,
+    op: string,
+): OpenAPIV3.Document {
     const paths: OpenAPIV3.PathsObject = {};
     const next: OpenAPIV3.Document = {
         paths,
@@ -35,7 +44,9 @@ function truncateSchema(schema: OpenAPIV3.Document, op: string): OpenAPIV3.Docum
         const pathObject: OpenAPIV3.PathItemObject = schema.paths[pathKey];
 
         for (const methodName in pathObject) {
-            const method: OpenAPIV3.OperationObject = pathObject[methodName];
+            const method: OpenAPIV3.OperationObject = (pathObject as any)[
+                methodName
+            ];
 
             if (method.operationId === op) {
                 paths[pathKey] = {
@@ -44,7 +55,7 @@ function truncateSchema(schema: OpenAPIV3.Document, op: string): OpenAPIV3.Docum
                     description: pathObject.description,
                     parameters: pathObject.parameters,
                     servers: pathObject.servers,
-                    [methodName]: method
+                    [methodName]: method,
                 };
 
                 found = true;
@@ -57,14 +68,34 @@ function truncateSchema(schema: OpenAPIV3.Document, op: string): OpenAPIV3.Docum
 
 export function openApiServer(props: Properties): DestroyFn {
     const schema = truncateSchema(props.schema, props.operation);
+    const sub = express();
 
     initialize({
-        app: props.app,
+        app: sub,
         apiDoc: schema,
         operations: {
-            [props.operation]: props.handler
-        }
+            [props.operation]: (
+                req: Request & IOpenAPIRequestValidator,
+                res: Response,
+                next: NextFunction,
+            ) => {
+                console.log(req.validateRequest);
+
+                return props.handler(req, res, next);
+            },
+        },
+        enableObjectCoercion: true,
     });
 
-    return () => {};
+    props.app.use(sub);
+
+    return () => {
+        const index = props.app.stack.findIndex(i => i === sub);
+
+        if (index === -1) {
+            return;
+        }
+
+        props.app.stack.splice(index, 1);
+    };
 }
