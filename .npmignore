@@ -1,4 +1,4 @@
-src/
+src
 .gitignore
 .huskyrc.json
 .prettierrc.yaml

@@ -9,47 +9,43 @@ export interface Settings {
 }
 
 export interface Properties extends NodeProperties {
+    schema: string;
     operation: string;
 }
 
-export function register(RED: Red): void {
-    RED.nodes.registerType(
-        'openapi',
-        function openapiNode(this: Node, props: Properties): void {
-            RED.nodes.createNode(this, props);
+module.exports = function register(RED: Red): void {
+    RED.nodes.registerType('openapi-in', function openapiNode(
+        this: Node,
+        props: Properties,
+    ): void {
+        RED.nodes.createNode(this, props);
 
-            // const schema: OpenAPI.Document = RED.settings.schema;
+        // const schema: OpenAPI.Document = RED.settings.schema;
 
-            // if (schema == null) {
-            //     return;
-            // }
+        // if (schema == null) {
+        //     return;
+        // }
 
-            // const schemaValidator = new OpenAPISchemaValidator({
-            //     version: 3,
-            // });
+        // const schemaValidator = new OpenAPISchemaValidator({
+        //     version: 3,
+        // });
 
-            // const result = schemaValidator.validate(schema);
+        // const result = schemaValidator.validate(schema);
 
-            // if (result.errors.length > 0) {
-            //     this.error('Invalid OpenAPI schema:');
-            //     result.errors.forEach((err: Ajv.ErrorObject) => {
-            //         this.error('    ', err.message);
-            //     });
+        // if (result.errors.length > 0) {
+        //     this.error('Invalid OpenAPI schema:');
+        //     result.errors.forEach((err: Ajv.ErrorObject) => {
+        //         this.error('    ', err.message);
+        //     });
 
-            //     return;
-            // }
+        //     return;
+        // }
 
-            // this.warn(`schema ${schema.info.title}`);
+        // this.warn(`schema ${schema.info.title}`);
 
-            // openApiServer(RED, {
-            //     schema,
-            //     operation: props.operation,
-            // });
-        },
-        {
-            settings: {
-                schema: {},
-            },
-        },
-    );
-}
+        // openApiServer(RED, {
+        //     schema,
+        //     operation: props.operation,
+        // });
+    });
+};

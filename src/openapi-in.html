@@ -4,22 +4,24 @@
             return typeof v === 'string';
         }
 
+        function toNativePomise(jqPromise) {
+            return new Promise((resolve, reject) => {
+                jqPromise.then(resolve).catch(reject);
+            });
+        }
+
         RED.nodes.registerType('openapi-in', {
             category: 'network',
             defaults: {
                 name: {
                     value: '',
+                    required: false,
                     validate: isString,
                 },
                 openapi: {
-                    value: [],
-                    required: true,
-                    type: 'openapi',
-                },
-                selectedSchema: {
                     value: '',
                     required: true,
-                    validate: isString,
+                    type: 'openapi-schema',
                 },
                 operation: {
                     value: '',
@@ -31,25 +33,120 @@
             outputs: 1,
             color: '#63db2a',
             label: function() {
-                return this.name || this.operation || 'openapi in';
+                return this.name || this.operation || 'OpenAPI Endpoint';
             },
             labelStyle: function() {
                 return this.name ? 'node_label_italic' : '';
             },
             icon: 'icon.png',
-            oneditprepare: function oneditprepare() {},
+            oneditprepare: function() {
+                const node = this;
+                let paths;
+                const schema = $('#node-input-openapi');
+                const operation = $('#node-input-operation');
+                const toggle = (element, disable) => {
+                    if (disable) {
+                        element.addClass('disabled');
+                    } else {
+                        element.removeClass('disabled');
+                    }
+                };
+                const renderOperations = () => {
+                    operation.empty();
+
+                    if (paths == null) {
+                        return;
+                    }
+
+                    $.each(paths, (path, methods) => {
+                        $.each(methods, (name, method) => {
+                            if (!method.operationId) {
+                                return;
+                            }
+
+                            operation.append(`
+                                <option value=${
+                                    method.operationId
+                                }>[${name.toUpperCase()}] ${path}</option>
+                            `);
+                        });
+                    });
+                };
+                const loadPaths = configId => {
+                    return toNativePomise(
+                        $.getJSON(`openapi/${configId}/paths`),
+                    );
+                };
+                const readPaths = configId => {
+                    let result;
+
+                    RED.nodes.eachConfig(i => {
+                        if (result != null) {
+                            return false;
+                        }
+
+                        if (i.id === configId) {
+                            if (i.schema) {
+                                result = i.schema.content.paths;
+                            }
+                        }
+                    });
+
+                    if (result != null) {
+                        return Promise.resolve(result);
+                    }
+
+                    return Promise.reject(new Error('not found'));
+                };
+
+                const initPaths = () => {
+                    const configId = schema.val();
+                    paths = null;
+
+                    if (configId === '_ADD_') {
+                        return;
+                    }
+
+                    toggle(schema, true);
+                    toggle(operation, true);
+
+                    return readPaths(configId)
+                        .then(data => {
+                            console.log(data);
+                            paths = data;
+                        })
+                        .catch(err => {
+                            alert('Failed to retrieve schema paths');
+
+                            console.error(err);
+                        })
+                        .finally(() => {
+                            renderOperations();
+                            toggle(schema, false);
+                            toggle(operation, false);
+                        });
+                };
+
+                schema.change(function() {
+                    initPaths();
+                });
+            },
         });
     })();
 </script>
 
 <script type="text/x-red" data-template-name="openapi-in">
     <div class="form-row">
-        <label for="node-input-openapi"><i class="fa fa-book"></i> <span>Schema</span></label>
+        <label for="node-input-openapi"><i class="fa fa-book"></i> <span>Schema:</span></label>
         <input type="text" id="node-input-openapi">
     </div>
     <div class="form-row">
-        <label for="node-input-operation"><i class="fa fa-tasks"></i> <span>Operation</span></label>
+        <label for="node-input-operation"><i class="fa fa-tasks"></i> <span>Operation:</span></label>
         <select id="node-input-operation"></select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i>< span>Name:</span></label>
+        <input type="text" id="node-input-name" />
     </div>
     <div class="form-tips"><b>Tip:</b> This is here to help.</div>
 </script>

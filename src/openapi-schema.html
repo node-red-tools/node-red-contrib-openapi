@@ -25,11 +25,11 @@
             return hash;
         }
 
-        RED.nodes.registerType('openapi', {
+        RED.nodes.registerType('openapi-schema', {
             category: 'config',
             defaults: {
                 name: {
-                    value: 'openapi',
+                    value: 'OpenAPI Schema',
                     required: true,
                     validate: isString,
                 },
@@ -41,7 +41,11 @@
                             return false;
                         }
 
-                        return input.hash > 0 && isPlainObject(input.content);
+                        return (
+                            $.isNumeric(input.hash) &&
+                            input.hash !== 0 &&
+                            isPlainObject(input.content)
+                        );
                     },
                 },
             },
@@ -50,7 +54,7 @@
             outputs: 1,
             color: '#63db2a',
             label: function() {
-                return this.name || 'openapi';
+                return this.name || 'OpenAPI Schema';
             },
             labelStyle: function() {
                 return this.name ? 'node_label_italic' : '';
@@ -191,7 +195,7 @@
     })();
 </script>
 
-<script type="text/x-red" data-template-name="openapi">
+<script type="text/x-red" data-template-name="openapi-schema">
     <div class="form-row">
         <label for="schema-file-select-button"><i class="fa fa-upload"></i> Upload: </label>
         <a class="red-ui-button" id="schema-file-select-button">
@@ -199,7 +203,7 @@
             <span id="schema-file-title">select a file to import</span>
         </a>
         <input id="schema-file" type="file" accept=".json" style="display:none">
-        <button id="schema-file-add-button" class="red-ui-button primary">Add</button>
+        <button id="schema-file-add-button" class="red-ui-button primary">Set</button>
     </div>
     <div class="form-row">
         <label for="schema"><i class="fa fa-code"></i> Current: </label>
@@ -212,7 +216,7 @@
     <div class="form-tips"><b>Tip:</b> This is here to help.</div>
 </script>
 
-<script type="text/x-red" data-help-name="openapi">
+<script type="text/x-red" data-help-name="openapi-schema">
     <p>Some useful help text to introduce the node.</p>
     <h3>Outputs</h3>
         <dl class="message-properties">

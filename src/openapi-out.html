@@ -9,16 +9,13 @@
             defaults: {
                 name: {
                     value: '',
-                    validate: isString,
-                },
-                schemas: {
-                    value: [],
-                    type:"openapi-config"
-                },
-                selectedSchema: {
-                    value: '',
                     required: true,
                     validate: isString,
+                },
+                openapi: {
+                    value: '',
+                    required: true,
+                    type: 'openapi-schema',
                 },
                 operation: {
                     value: '',
@@ -30,7 +27,7 @@
             outputs: 0,
             color: '#63db2a',
             label: function() {
-                return this.name || this.operation || 'openapi out';
+                return this.name || this.operation || 'OpenAPI Client';
             },
             labelStyle: function() {
                 return this.name ? 'node_label_italic' : '';

@@ -44,7 +44,7 @@
         "nodes": {
             "openapi-in": "lib/openapi-in.js",
             "openapi-out": "lib/openapi-out.js",
-            "openapi-config": "lib/openapi-config.js"
+            "openapi-schema": "lib/openapi-schema.js"
         }
     }
 }
