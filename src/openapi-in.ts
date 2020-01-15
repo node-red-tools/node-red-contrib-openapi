@@ -1,15 +1,22 @@
 import { Node, NodeProperties, Red } from 'node-red';
-import { findSchema } from './openapi-schema';
-import { enqueue } from './router';
+import { ConfigSchema, Message } from './models';
+// import { findSchema } from './openapi-schema';
+import { enqueue } from './queue';
 import { openApiServer } from './server';
-
-export interface Settings {
-    schema: any;
-}
 
 export interface Properties {
     schema: string;
     operation: string;
+}
+
+function findSchema(RED: Red, configId: string): ConfigSchema | undefined {
+    const node = RED.nodes.getNode(configId) as any;
+
+    if (node && node.schema) {
+        return node.schema;
+    }
+
+    return undefined;
 }
 
 module.exports = function register(RED: Red): void {
@@ -42,24 +49,28 @@ module.exports = function register(RED: Red): void {
             return;
         }
 
-        this.on("close", openApiServer({
-            app: RED.httpNode,
-            schema: spec.content,
-            operation: this.operation,
-            handler: (req, res) => {
-                const id = enqueue(req, res);
+        this.on(
+            'close',
+            openApiServer({
+                app: RED.httpNode,
+                schema: spec.content,
+                operation: this.operation,
+                handler: (req, res) => {
+                    const id = enqueue(req, res);
+                    const msg: Message = {
+                        ___openapiReqID: id,
+                        cookies: req.cookies,
+                        headers: req.headers,
+                        params: req.params,
+                        path: req.path,
+                        payload: req.body,
+                        query: req.query,
+                        url: req.url,
+                    };
 
-                this.send({
-                    _reqId: id,
-                    cookies: req.cookies,
-                    headers: req.headers,
-                    params: req.params,
-                    path: req.path,
-                    payload: req.body,
-                    query: req.query,
-                    url: req.url
-                });
-            }
-        }));
+                    this.send(msg);
+                },
+            }),
+        );
     });
 };

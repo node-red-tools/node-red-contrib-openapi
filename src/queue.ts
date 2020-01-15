@@ -1,4 +1,4 @@
-import { Handler, Request, Response } from "express";
+import { Handler, Request, Response } from 'express';
 import nanoid from 'nanoid';
 
 export type RequestID = string;
@@ -10,7 +10,7 @@ interface Context {
 }
 
 const requests: {
-    [id: string]: Context
+    [id: string]: Context;
 } = {};
 
 export function enqueue(req: Request, res: Response): RequestID {
@@ -19,7 +19,7 @@ export function enqueue(req: Request, res: Response): RequestID {
     requests[id] = {
         id,
         req,
-        res
+        res,
     };
 
     return id;

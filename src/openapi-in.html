@@ -33,7 +33,7 @@
             outputs: 1,
             color: '#63db2a',
             label: function() {
-                return this.name || this.operation || 'OpenAPI Endpoint';
+                return this.name || this.operation || 'OpenAPI In';
             },
             labelStyle: function() {
                 return this.name ? 'node_label_italic' : '';
@@ -65,7 +65,9 @@
                             }
 
                             $operation.append(`
-                                <option value="${method.operationId}">[${name.toUpperCase()}] ${path}</option>
+                                <option value="${
+                                    method.operationId
+                                }">[${name.toUpperCase()}] ${path}</option>
                             `);
                         });
                     });
@@ -142,7 +144,7 @@
         <select id="node-input-operation"></select>
     </div>
     <div class="form-row">
-        <label for="node-input-name"><i class="fa fa-tag"></i>< span>Name:</span></label>
+        <label for="node-input-name"><i class="fa fa-tag"></i> <span>Name:</span></label>
         <input type="text" id="node-input-name" />
     </div>
     <div class="form-tips"><b>Tip:</b> This is here to help.</div>

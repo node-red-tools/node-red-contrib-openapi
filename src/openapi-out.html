@@ -9,17 +9,12 @@
             defaults: {
                 name: {
                     value: '',
-                    required: true,
+                    required: false,
                     validate: isString,
                 },
-                openapi: {
+                statusCode: {
                     value: '',
-                    required: true,
-                    type: 'openapi-schema',
-                },
-                operation: {
-                    value: '',
-                    required: true,
+                    required: false,
                     validate: isString,
                 },
             },
@@ -27,13 +22,12 @@
             outputs: 0,
             color: '#63db2a',
             label: function() {
-                return this.name || this.operation || 'OpenAPI Client';
+                return this.name || 'OpenAPI Response';
             },
             labelStyle: function() {
                 return this.name ? 'node_label_italic' : '';
             },
             icon: 'icon.png',
-            oneditprepare: function oneditprepare() {},
         });
     })();
 </script>
@@ -43,8 +37,8 @@
         <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
         <input type="text" id="node-input-name" placeholder="Name">
 
-        <label for="node-input-schema"><i class="fa fa-tag"></i> Schema</label>
-        <input type="text" id="node-input-schema" placeholder="Schema">
+        <label for="node-input-statusCode"><i class="fa fa-tag"></i> Schema</label>
+        <input type="number" id="node-input-statusCode" placeholder="Status code">
     </div>
     <div class="form-tips"><b>Tip:</b> This is here to help.</div>
 </script>
