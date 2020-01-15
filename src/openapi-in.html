@@ -18,7 +18,7 @@
                     required: false,
                     validate: isString,
                 },
-                openapi: {
+                schema: {
                     value: '',
                     required: true,
                     type: 'openapi-schema',
@@ -42,17 +42,17 @@
             oneditprepare: function() {
                 const node = this;
                 let paths;
-                const schema = $('#node-input-openapi');
-                const operation = $('#node-input-operation');
-                const toggle = (element, disable) => {
+                const $schema = $('#node-input-schema');
+                const $operation = $('#node-input-operation');
+                const toggle = ($element, disable) => {
                     if (disable) {
-                        element.addClass('disabled');
+                        $element.addClass('disabled');
                     } else {
-                        element.removeClass('disabled');
+                        $element.removeClass('disabled');
                     }
                 };
                 const renderOperations = () => {
-                    operation.empty();
+                    $operation.empty();
 
                     if (paths == null) {
                         return;
@@ -64,10 +64,8 @@
                                 return;
                             }
 
-                            operation.append(`
-                                <option value=${
-                                    method.operationId
-                                }>[${name.toUpperCase()}] ${path}</option>
+                            $operation.append(`
+                                <option value="${method.operationId}">[${name.toUpperCase()}] ${path}</option>
                             `);
                         });
                     });
@@ -100,19 +98,18 @@
                 };
 
                 const initPaths = () => {
-                    const configId = schema.val();
+                    const configId = $schema.val();
                     paths = null;
 
                     if (configId === '_ADD_') {
                         return;
                     }
 
-                    toggle(schema, true);
-                    toggle(operation, true);
+                    toggle($schema, true);
+                    toggle($operation, true);
 
                     return readPaths(configId)
                         .then(data => {
-                            console.log(data);
                             paths = data;
                         })
                         .catch(err => {
@@ -122,12 +119,12 @@
                         })
                         .finally(() => {
                             renderOperations();
-                            toggle(schema, false);
-                            toggle(operation, false);
+                            toggle($schema, false);
+                            toggle($operation, false);
                         });
                 };
 
-                schema.change(function() {
+                $schema.change(function() {
                     initPaths();
                 });
             },
@@ -137,8 +134,8 @@
 
 <script type="text/x-red" data-template-name="openapi-in">
     <div class="form-row">
-        <label for="node-input-openapi"><i class="fa fa-book"></i> <span>Schema:</span></label>
-        <input type="text" id="node-input-openapi">
+        <label for="node-input-schema"><i class="fa fa-book"></i> <span>Schema:</span></label>
+        <input type="text" id="node-input-schema">
     </div>
     <div class="form-row">
         <label for="node-input-operation"><i class="fa fa-tasks"></i> <span>Operation:</span></label>

@@ -1,6 +1,6 @@
-import { OpenAPI } from 'openapi-types';
+import { OpenAPIV3 } from 'openapi-types';
 
 export interface ConfigSchema {
     hash: number;
-    content: OpenAPI.Document;
+    content: OpenAPIV3.Document;
 }

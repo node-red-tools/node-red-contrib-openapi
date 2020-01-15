@@ -9,6 +9,16 @@ export interface Properties extends NodeProperties {
     schema?: ConfigSchema;
 }
 
+export function findSchema(RED: Red, configId: string): ConfigSchema | undefined {
+    const node = RED.nodes.getNode(configId) as Properties;
+
+    if (node && node.schema) {
+        return node.schema;
+    }
+
+    return undefined;
+}
+
 module.exports = function register(RED: Red): void {
     RED.nodes.registerType('openapi-schema', function openapiSchemaNode(
         this: Node & Properties,
@@ -42,20 +52,10 @@ module.exports = function register(RED: Red): void {
     });
 
     if (RED.httpAdmin != null) {
-        const findSchema = (id: string): ConfigSchema | undefined => {
-            const node = RED.nodes.getNode(id) as Properties;
-
-            if (node) {
-                return node.schema;
-            }
-
-            return undefined;
-        };
-
         RED.httpAdmin.get(
             '/openapi/:id/paths',
             (req: Request, res: Response) => {
-                const schema = findSchema(req.params.id);
+                const schema = findSchema(RED, req.params.id);
 
                 if (!schema) {
                     return res.status(404).end();

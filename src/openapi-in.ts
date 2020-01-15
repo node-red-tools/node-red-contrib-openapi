@@ -1,51 +1,65 @@
-// import * as Ajv from 'ajv';
 import { Node, NodeProperties, Red } from 'node-red';
-// import OpenAPISchemaValidator from 'openapi-schema-validator';
-// import { OpenAPI } from 'openapi-types';
-// import { openApiServer } from './server';
+import { findSchema } from './openapi-schema';
+import { enqueue } from './router';
+import { openApiServer } from './server';
 
 export interface Settings {
     schema: any;
 }
 
-export interface Properties extends NodeProperties {
+export interface Properties {
     schema: string;
     operation: string;
 }
 
 module.exports = function register(RED: Red): void {
     RED.nodes.registerType('openapi-in', function openapiNode(
-        this: Node,
-        props: Properties,
+        this: Node & Properties,
+        props: NodeProperties & Properties,
     ): void {
         RED.nodes.createNode(this, props);
 
-        // const schema: OpenAPI.Document = RED.settings.schema;
+        if (!props.schema) {
+            this.error('Schema not set');
 
-        // if (schema == null) {
-        //     return;
-        // }
+            return;
+        }
 
-        // const schemaValidator = new OpenAPISchemaValidator({
-        //     version: 3,
-        // });
+        if (!props.operation) {
+            this.error('Operation not set');
 
-        // const result = schemaValidator.validate(schema);
+            return;
+        }
 
-        // if (result.errors.length > 0) {
-        //     this.error('Invalid OpenAPI schema:');
-        //     result.errors.forEach((err: Ajv.ErrorObject) => {
-        //         this.error('    ', err.message);
-        //     });
+        this.schema = props.schema;
+        this.operation = props.operation;
 
-        //     return;
-        // }
+        const spec = findSchema(RED, this.schema);
 
-        // this.warn(`schema ${schema.info.title}`);
+        if (!spec) {
+            this.error(`Schema not found: ${this.schema}`);
 
-        // openApiServer(RED, {
-        //     schema,
-        //     operation: props.operation,
-        // });
+            return;
+        }
+
+        this.on("close", openApiServer({
+            app: RED.httpNode,
+            schema: spec.content,
+            operation: this.operation,
+            handler: (req, res) => {
+                const id = enqueue(req, res);
+
+                this.send({
+                    _reqId: id,
+                    cookies: req.cookies,
+                    headers: req.headers,
+                    params: req.params,
+                    path: req.path,
+                    payload: req.body,
+                    query: req.query,
+                    url: req.url
+                });
+            }
+        }));
     });
 };

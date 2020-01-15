@@ -20,6 +20,7 @@
     "license": "MIT",
     "devDependencies": {
         "@types/express": "^4.17.2",
+        "@types/nanoid": "^2.1.0",
         "@types/node": "^13.1.6",
         "@types/node-red": "^0.20.1",
         "cpy-cli": "^3.0.0",
@@ -35,6 +36,8 @@
         "typescript": "^3.7.4"
     },
     "dependencies": {
+        "express-openapi": "^6.0.0",
+        "nanoid": "^2.1.9",
         "openapi-default-setter": "^2.1.0",
         "openapi-request-validator": "^4.2.0",
         "openapi-schema-validator": "^3.0.3",
