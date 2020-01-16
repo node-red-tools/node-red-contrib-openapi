@@ -1,15 +1,17 @@
 import { Red } from 'node-red';
-import { ConfigSchema } from './models';
+import { ConfigNode, ConfigSchema, LazyRouter } from './models';
 
 export function findSchema(
     RED: Red,
     configId: string,
 ): ConfigSchema | undefined {
-    const node = RED.nodes.getNode(configId) as { schema?: ConfigSchema };
+    const node = RED.nodes.getNode(configId) as ConfigNode | null;
 
-    if (node && node.schema) {
-        return node.schema;
-    }
+    return node ? node.schema : undefined;
+}
 
-    return undefined;
+export function findRouter(RED: Red, configId: string): LazyRouter | undefined {
+    const node = RED.nodes.getNode(configId) as ConfigNode | null;
+
+    return node ? node.router : undefined;
 }

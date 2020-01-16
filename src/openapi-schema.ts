@@ -1,18 +1,28 @@
 import * as Ajv from 'ajv';
-import { Request, Response } from 'express';
-import { Node, NodeProperties, Red } from 'node-red';
+import { NextFunction, Request, Response, Router } from 'express';
+import { OpenApiValidator } from 'express-openapi-validator';
+import { NodeProperties, Red } from 'node-red';
 import OpenAPISchemaValidator from 'openapi-schema-validator';
-import { OpenAPI } from 'openapi-types';
+import { OpenAPIV3 } from 'openapi-types';
 import { findSchema } from './helpers';
-import { ConfigSchema } from './models';
+import { ConfigNode, ConfigSchema, Register } from './models';
 
 export interface Properties extends NodeProperties {
     schema?: ConfigSchema;
 }
 
 module.exports = function register(RED: Red): void {
+    const schemaValidator = new OpenAPISchemaValidator({
+        version: 3,
+    });
+    const mainRouter = Router();
+
+    if (RED.httpNode) {
+        RED.httpNode.use(mainRouter);
+    }
+
     RED.nodes.registerType('openapi-schema', function openapiSchemaNode(
-        this: Node & Properties,
+        this: ConfigNode,
         props: Properties,
     ): void {
         RED.nodes.createNode(this, props);
@@ -21,12 +31,7 @@ module.exports = function register(RED: Red): void {
             return;
         }
 
-        const schema: OpenAPI.Document = props.schema.content;
-
-        const schemaValidator = new OpenAPISchemaValidator({
-            version: 3,
-        });
-
+        const schema: OpenAPIV3.Document = props.schema.content;
         const result = schemaValidator.validate(schema);
 
         if (result.errors.length > 0) {
@@ -39,7 +44,56 @@ module.exports = function register(RED: Red): void {
             return;
         }
 
+        const router = Router();
+        const routes: Register[] = [];
+
         this.schema = props.schema;
+        this.router = (fn: Register) => {
+            routes.push(fn);
+        };
+
+        mainRouter.use(router);
+
+        const validator = new OpenApiValidator({
+            apiSpec: schema,
+            validateRequests: true,
+            validateResponses: true,
+        });
+
+        validator.install(router).then(() => {
+            routes.forEach(r => r(router));
+            routes.length = 0;
+
+            router.use(
+                (
+                    err: Error & any,
+                    req: Request & any,
+                    res: Response,
+                    next: NextFunction,
+                ) => {
+                    // it's an error from the middleware
+                    if (err.status === 404 && req.openapi != null) {
+                        return next();
+                    }
+
+                    // format error
+                    res.status(err.status || 500).json({
+                        message: err.message,
+                        errors: err.errors,
+                    });
+                },
+            );
+        });
+
+        this.on('close', () => {
+            router.stack.length = 0;
+
+            mainRouter.stack.forEach((route: any, i: any, routes: any) => {
+                if (route.handle === router) {
+                    routes.splice(i, 1);
+                }
+            });
+        });
     });
 
     if (RED.httpAdmin != null) {
@@ -53,6 +107,19 @@ module.exports = function register(RED: Red): void {
                 }
 
                 return res.status(200).send(schema.content.paths);
+            },
+        );
+
+        RED.httpAdmin.post(
+            '/openapi/validate',
+            (req: Request, res: Response) => {
+                const schema = req.body;
+
+                if (!schema) {
+                    return res.status(400).end();
+                }
+
+                return res.json(schemaValidator.validate(schema));
             },
         );
     }
