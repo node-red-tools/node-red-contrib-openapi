@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 import { Node, NodeProperties, Red } from 'node-red';
 import { findSchema } from './helpers';
 import { Message } from './models';
@@ -11,6 +11,12 @@ export interface Properties {
 }
 
 module.exports = function register(RED: Red): void {
+    const app = express();
+
+    if (RED.httpNode != null) {
+        RED.httpNode.use(app);
+    }
+
     RED.nodes.registerType('openapi-in', function openapiNode(
         this: Node & Properties,
         props: NodeProperties & Properties,
@@ -43,7 +49,7 @@ module.exports = function register(RED: Red): void {
         this.on(
             'close',
             openApiServer({
-                app: RED.httpNode,
+                app,
                 schema: spec.content,
                 operation: this.operation,
                 handler: (req: Request, res: Response, next: NextFunction) => {
