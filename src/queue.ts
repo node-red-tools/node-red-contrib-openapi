@@ -1,5 +1,5 @@
+import cuid from 'cuid';
 import { Handler, NextFunction, Request, Response } from 'express';
-import nanoid from 'nanoid';
 
 export type RequestID = string;
 
@@ -19,7 +19,7 @@ export function enqueue(
     res: Response,
     next: NextFunction,
 ): RequestID {
-    const id = nanoid();
+    const id = cuid();
 
     requests[id] = {
         id,
