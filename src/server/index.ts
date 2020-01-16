@@ -1,9 +1,9 @@
-import { Application, Handler, NextFunction, Request, Response } from 'express';
+import { Handler, NextFunction, Request, Response, Router } from 'express';
 import { OpenApiValidator } from 'express-openapi-validator';
 import { OpenAPIV3 } from 'openapi-types';
 
 export interface Properties {
-    app: Application;
+    app: Router;
     operation: string;
     schema: OpenAPIV3.Document;
     handler: Handler;
@@ -85,6 +85,7 @@ function truncateSchema(
 }
 
 export function openApiServer(props: Properties): DestroyFn {
+    const router = Router();
     const op = getOperation(props.schema, props.operation);
 
     if (!op) {
@@ -98,49 +99,55 @@ export function openApiServer(props: Properties): DestroyFn {
         validateResponses: true,
     });
 
-    validator.installSync(props.app);
+    validator
+        .install(router)
+        .then(() => {
+            const route = (router as any)[op.method] as any;
 
-    const route = (props.app as any)[op.method] as any;
-
-    if (typeof route !== 'function') {
-        throw new Error(`Invalid method name: ${props.operation}.${op.method}`);
-    }
-
-    const expressPath = op.path
-        .substring(1)
-        .split('/')
-        .map(toExpressParams)
-        .join('/');
-
-    route.call(props.app, `/${expressPath}`, props.handler);
-
-    props.app.use(
-        (
-            err: Error & any,
-            req: Request & any,
-            res: Response,
-            next: NextFunction,
-        ) => {
-            // it's an error from the middleware
-            if (err.status === 404 && req.openapi != null) {
-                return next();
+            if (typeof route !== 'function') {
+                throw new Error(
+                    `Invalid method name: ${props.operation}.${op.method}`,
+                );
             }
 
-            // format error
-            res.status(err.status || 500).json({
-                message: err.message,
-                errors: err.errors,
-            });
-        },
-    );
+            const expressPath = op.path
+                .substring(1)
+                .split('/')
+                .map(toExpressParams)
+                .join('/');
+
+            route.call(router, `/${expressPath}`, props.handler);
+            router.use(
+                (
+                    err: Error & any,
+                    req: Request & any,
+                    res: Response,
+                    next: NextFunction,
+                ) => {
+                    // it's an error from the middleware
+                    if (err.status === 404 && req.openapi != null) {
+                        return next();
+                    }
+
+                    // format error
+                    res.status(err.status || 500).json({
+                        message: err.message,
+                        errors: err.errors,
+                    });
+                },
+            );
+
+            props.app.use(router);
+        })
+        .catch(err => console.log(err));
 
     return () => {
-        // const index = props.app.stack.findIndex(i => i === props.handler);
+        router.stack.length = 0;
 
-        // if (index === -1) {
-        //     return;
-        // }
-
-        // props.app.stack.splice(index, 1);
+        props.app.stack.forEach((route: any, i: any, routes: any) => {
+            if (route.handle === router) {
+                routes.splice(i, 1);
+            }
+        });
     };
 }

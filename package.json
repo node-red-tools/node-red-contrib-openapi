@@ -37,7 +37,7 @@
         "typescript": "^3.7.4"
     },
     "dependencies": {
-        "express": "4.17.1",
+        "express": "^4.17.1",
         "express-openapi-validator": "^3.6.4",
         "nanoid": "^2.1.9",
         "openapi-schema-validator": "^3.0.3",
