@@ -58,16 +58,23 @@
                         return;
                     }
 
+                    const currentOperationId = this.operation;
+
                     $.each(paths, (path, methods) => {
                         $.each(methods, (name, method) => {
                             if (!method.operationId) {
                                 return;
                             }
 
+                            const selected =
+                                method.operationId === currentOperationId
+                                    ? 'selected'
+                                    : '';
+
                             $operation.append(`
-                                <option value="${
-                                    method.operationId
-                                }">[${name.toUpperCase()}] ${path}</option>
+                                <option value="${method.operationId}" ${
+                                selected ? 'selected' : ''
+                            }>[${name.toUpperCase()}] ${path}</option>
                             `);
                         });
                     });
