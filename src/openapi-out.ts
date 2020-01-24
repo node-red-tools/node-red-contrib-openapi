@@ -26,31 +26,10 @@ module.exports = function register(RED: Red): void {
             }
 
             try {
-                dequeue(id, (_, res: Response & any, __: NextFunction) => {
+                dequeue(id, (_, res: Response, __: NextFunction) => {
                     const statusCode = this.statusCode || '200';
-                    const body = msg.payload;
 
-                    if (typeof res.validateResponse === 'function') {
-                        // tslint:disable-next-line: max-line-length
-                        const validation = res.validateResponse(
-                            statusCode,
-                            body,
-                        ) || { message: undefined, errors: undefined };
-
-                        if (validation.errors) {
-                            const errorList = Array.from(validation.errors)
-                                .map((e: any) => e.message)
-                                .join(',');
-
-                            this.error(`Invalid response for status code ${res.statusCode}: ${errorList}`);
-
-                            return res
-                                .status(501)
-                                .end();
-                        }
-                    }
-
-                    res.status(parseFloat(statusCode)).send(body);
+                    res.sendStatus(parseFloat(statusCode)).send(msg.payload);
                 });
             } catch (err) {
                 this.error(err);
