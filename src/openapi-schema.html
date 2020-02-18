@@ -8,21 +8,16 @@
             return $.isPlainObject(v);
         }
 
-        function hashCode(str) {
-            let hash = 0,
-                i,
-                chr;
+        function toNativePomise(jqPromise) {
+            return new Promise((resolve, reject) => {
+                jqPromise.then(resolve).catch(reject);
+            });
+        }
 
-            if (!str || typeof str !== 'string' || str.length === 0)
-                return hash;
-
-            for (i = 0; i < str.length; i++) {
-                chr = str.charCodeAt(i);
-                hash = (hash << 5) - hash + chr;
-                hash |= 0; // Convert to 32bit integer
-            }
-
-            return hash;
+        function compare(current, next) {
+            return toNativePomise(
+                $.post('openapi/compare', { current, next }),
+            );
         }
 
         RED.nodes.registerType('openapi-schema', {
@@ -37,15 +32,7 @@
                     value: null,
                     required: true,
                     validate: input => {
-                        if (!isPlainObject(input)) {
-                            return false;
-                        }
-
-                        return (
-                            $.isNumeric(input.hash) &&
-                            input.hash !== 0 &&
-                            isPlainObject(input.content)
-                        );
+                        return isPlainObject(input);
                     },
                 },
             },
@@ -96,17 +83,18 @@
                 const renderCurrent = () => {
                     current.empty();
 
-                    if (node.schema == null) {
+                    const schema = node.schema;
+
+                    if (schema == null) {
                         current.append('<span>None</span>');
 
                         return;
                     }
 
-                    const content = node.schema.content;
                     let title = 'Unknown file';
 
-                    if (content.info != null) {
-                        title = `${content.info.title}:${content.info.version}`;
+                    if (schema.info != null) {
+                        title = `${schema.info.title}:${schema.info.version}`;
                     }
 
                     current.append(`
@@ -138,29 +126,27 @@
 
                     file.text()
                         .then(content => {
-                            const json = JSON.parse(content);
+                            const next = JSON.parse(content);
 
-                            if (!json.openapi) {
+                            if (!next.openapi) {
                                 alert('Invalid OpenAPI schema');
 
                                 return;
                             }
 
-                            const hash = hashCode(content);
+                            if (node.schema) {
+                                return compare(node.schema, next).then((equal) => {
+                                    if (!equal) {
+                                        node.schema = next;
 
-                            if (
-                                node.schema != null &&
-                                node.schema.hash === hash
-                            ) {
-                                alert('File is already added');
+                                        return;
+                                    }
 
-                                return;
+                                    alert('File is already added');
+                                });
                             }
 
-                            node.schema = {
-                                hash: hash,
-                                content: json,
-                            };
+                            node.schema = next;
                         })
                         .catch(err => {
                             alert('Failed to load file');
@@ -203,7 +189,7 @@
             <span id="schema-file-title">select a file to import</span>
         </a>
         <input id="schema-file" type="file" accept=".json" style="display:none">
-        <button id="schema-file-add-button" class="red-ui-button primary">Set</button>
+        <button id="schema-file-add-button" class="red-ui-button primary">Use</button>
     </div>
     <div class="form-row">
         <label for="schema"><i class="fa fa-code"></i> Current: </label>

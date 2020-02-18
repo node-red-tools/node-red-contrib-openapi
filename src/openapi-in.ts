@@ -32,9 +32,9 @@ module.exports = function register(RED: Red): void {
         this.schema = props.schema;
         this.operation = props.operation;
 
-        const spec = findSchema(RED, this.schema);
+        const schema = findSchema(RED, this.schema);
 
-        if (!spec) {
+        if (!schema) {
             this.error(`Schema not found: ${this.schema}`);
 
             return;
@@ -52,8 +52,8 @@ module.exports = function register(RED: Red): void {
             this.on(
                 'close',
                 openApiRoute({
+                    schema,
                     router: r,
-                    schema: spec.content,
                     operation: this.operation,
                     handler: (
                         req: Request,

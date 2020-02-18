@@ -12,10 +12,7 @@ export interface ConfigNode extends Node {
     router: LazyRouter;
 }
 
-export interface ConfigSchema {
-    hash: number;
-    content: OpenAPIV3.Document;
-}
+export interface ConfigSchema extends OpenAPIV3.Document {}
 
 export interface Message {
     ___openapiReqID: RequestID;

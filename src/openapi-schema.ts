@@ -2,6 +2,7 @@ import * as Ajv from 'ajv';
 import { NextFunction, Request, Response, Router } from 'express';
 import { OpenApiValidator } from 'express-openapi-validator';
 import { NodeProperties, Red } from 'node-red';
+import createHash from 'object-hash';
 import OpenAPISchemaValidator from 'openapi-schema-validator';
 import { OpenAPIV3 } from 'openapi-types';
 import { findSchema } from './helpers';
@@ -31,7 +32,7 @@ module.exports = function register(RED: Red): void {
             return;
         }
 
-        const schema: OpenAPIV3.Document = props.schema.content;
+        const schema: OpenAPIV3.Document = props.schema;
         const result = schemaValidator.validate(schema);
 
         if (result.errors.length > 0) {
@@ -106,8 +107,29 @@ module.exports = function register(RED: Red): void {
                     return res.status(404).end();
                 }
 
-                return res.status(200).send(schema.content.paths);
+                return res.status(200).send(schema.paths);
             },
+        );
+
+        RED.httpAdmin.post(
+            '/openapi/compare',
+            (req: Request, res: Response) => {
+                if (!req.body) {
+                    return res.status(400).end();
+                }
+
+
+                const { current, next }  = req.body;
+
+                if (!current || !next) {
+                    return res.status(400).end();
+                }
+
+                const currentHash = createHash(current);
+                const otherHash = createHash(next);
+
+                return res.status(200).send(currentHash === otherHash);
+            }
         );
 
         RED.httpAdmin.post(
