@@ -10,6 +10,7 @@ import { ConfigNode, ConfigSchema, Register } from './models';
 
 export interface Properties extends NodeProperties {
     schema?: ConfigSchema;
+    baseURL?: string;
 }
 
 module.exports = function register(RED: Red): void {
@@ -48,12 +49,17 @@ module.exports = function register(RED: Red): void {
         const router = Router();
         const routes: Register[] = [];
 
+        this.baseURL = props.baseURL;
         this.schema = props.schema;
         this.router = (fn: Register) => {
             routes.push(fn);
         };
 
-        mainRouter.use(router);
+        if (this.baseURL && this.baseURL !== '/') {
+            mainRouter.use(this.baseURL, router);
+        } else {
+            mainRouter.use(router);
+        }
 
         const validator = new OpenApiValidator({
             apiSpec: schema,

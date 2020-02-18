@@ -8,6 +8,7 @@ export type Register = (router: IRouter) => void;
 export type Unregister = () => void;
 
 export interface ConfigNode extends Node {
+    baseURL?: string;
     schema: ConfigSchema;
     router: LazyRouter;
 }

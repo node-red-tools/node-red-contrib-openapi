@@ -35,6 +35,11 @@
                         return isPlainObject(input);
                     },
                 },
+                baseURL: {
+                    value: "/",
+                    required: false,
+                    validate: isString,
+                }
             },
             icon: 'icon.png',
             inputs: 0,
@@ -194,6 +199,10 @@
     <div class="form-row">
         <label for="schema"><i class="fa fa-code"></i> Current: </label>
         <div id="schema" style="display: inline-block;"></div>
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-baseURL"><i class="fa fa-link"></i> Base URL: </label>
+        <input type="text" id="node-config-input-baseURL" />
     </div>
     <div class="form-row">
         <label for="node-config-input-name"><i class="fa fa-tag"></i> Name: </label>
