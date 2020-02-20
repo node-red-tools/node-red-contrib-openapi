@@ -5,6 +5,7 @@ import { dequeue } from './queue';
 
 export interface Properties {
     statusCode: string;
+    fromMessage: boolean;
 }
 
 module.exports = function register(RED: Red): void {
@@ -14,9 +15,10 @@ module.exports = function register(RED: Red): void {
     ): void {
         RED.nodes.createNode(this, props);
 
-        this.statusCode = props.statusCode || '200';
+        this.statusCode = props.statusCode || '500';
+        this.fromMessage = props.fromMessage || false;
 
-        this.on('input', (msg: Message) => {
+        this.on('input', (msg: Message & { statusCode?: number | string }) => {
             const id = msg.___openapiReqID;
 
             if (!id) {
@@ -27,9 +29,21 @@ module.exports = function register(RED: Red): void {
 
             try {
                 dequeue(id, (_, res: Response, __: NextFunction) => {
-                    const statusCode = this.statusCode || '200';
+                    let statusCode = '500';
 
-                    res.sendStatus(parseFloat(statusCode)).send(msg.payload);
+                    if (this.fromMessage && msg.statusCode) {
+                        statusCode = msg.statusCode.toString();
+                    } else {
+                        statusCode = this.statusCode;
+                    }
+
+                    res.status(parseFloat(statusCode));
+
+                    if (typeof msg.payload !== 'undefined') {
+                        res.send(msg.payload);
+                    } else {
+                        res.end();
+                    }
                 });
             } catch (err) {
                 this.error(err);

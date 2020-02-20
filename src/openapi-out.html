@@ -340,6 +340,10 @@
             return typeof v === 'string';
         }
 
+        function isBoolean(v) {
+            return typeof v === 'boolean';
+        }
+
         RED.nodes.registerType('openapi-out', {
             category: 'network',
             defaults: {
@@ -353,6 +357,11 @@
                     required: true,
                     validate: isString,
                 },
+                fromMessage: {
+                    value: false,
+                    required: true,
+                    validate: isBoolean
+                }
             },
             inputs: 1,
             outputs: 0,
@@ -366,6 +375,15 @@
             icon: 'icon.png',
             oneditprepare: function() {
                 const $codes = $('#node-input-statusCode');
+                const $fromMsg = $('#node-input-fromMessage');
+                const $fromMsgLabel = $('#node-input-fromMessage');
+                const toggleStatusCodes = () => {
+                    if ($fromMsg.is(":checked")) {
+                        $codes.attr('disabled', true);
+                    } else {
+                        $codes.removeAttr('disabled');
+                    }
+                };
                 const renderStatusCodes = () => {
                     $codes.empty();
                     
@@ -381,7 +399,15 @@
                         }>${obj.code} - ${obj.phrase}</option>
                         `);
                     });
+
+                    toggleStatusCodes();
                 };
+
+                // $fromMsg.css({
+                //     'width': '15px',
+                //     'margin': '0'
+                // });
+                $fromMsg.click(toggleStatusCodes);
 
                 renderStatusCodes();
             },
@@ -392,11 +418,18 @@
 <script type="text/x-red" data-template-name="openapi-out">
     <div class="form-row">
         <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-        <input type="text" id="node-input-name" placeholder="Name">
+        <input type="text" id="node-input-name" placeholder="Name" />
     </div>
     <div class="form-row">
         <label for="node-input-statusCode"><i class="fa fa-server"></i> Status code</label>
         <select id="node-input-statusCode" placeholder="Status code"></select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-fromMessage">
+            <i class="fa fa-envelope"></i>
+            <span>Dynamic</span>
+        </label>
+        <input id="node-input-fromMessage" type="checkbox" />
     </div>
     <div class="form-tips"><b>Tip:</b> This is here to help.</div>
 </script>
